@@ -1,76 +1,35 @@
-// create a web server
-var http = require('http');
-var fs = require('fs');
-var url = require('url');
-var port = 8000;
+// Create a web server
+// Create a route that returns a list of comments
 
-var server = http.createServer(function (request, response) {
-    var parsedUrl = url.parse(request.url, true);
-    var pathname = parsedUrl.pathname;
-    var query = parsedUrl.query;
-    var id = query.id;
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
 
-    if (pathname === '/') {
-        if (id === undefined) {
-            fs.readdir('./data', function (error, fileList) {
-                var title = 'Welcome';
-                var description = 'Hello, Node.js';
-                var list = '<ul>';
-                var i = 0;
-                while (i < fileList.length) {
-                    list = list + `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
-                    i++;
-                }
-                list = list + '</ul>';
-                var template = `
-                <!doctype html>
-                <html>
-                <head>
-                    <title>WEB1 - ${title}</title>
-                    <meta charset="utf-8">
-                </head>
-                <body>
-                    <h1><a href="/">WEB</a></h1>
-                    ${list}
-                    <h2>${title}</h2>
-                    <p>${description}</p>
-                </body>
-                </html>
-                `;
-                response.writeHead(200);
-                response.end(template);
-            });
-        } else {
-            fs.readdir('./data', function (error, fileList) {
-                var title = 'Welcome';
-                var description = 'Hello, Node.js';
-                var list = '<ul>';
-                var i = 0;
-                while (i < fileList.length) {
-                    list = list + `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
-                    i++;
-                }
-                list = list + '</ul>';
-                fs.readFile(`data/${id}`, 'utf8', function (err, description) {
-                    var title = id;
-                    var template = `
-                    <!doctype html>
-                    <html>
-                    <head>
-                        <title>WEB1 - ${title}</title>
-                        <meta charset="utf-8">
-                    </head>
-                    <body>
-                        <h1><a href="/">WEB</a></h1>
-                        ${list}
-                        <h2>${title}</h2>
-                        <p>${description}</p>
-                    </body>
-                    </html>
-                    `;
-                    response.writeHead(200)
-                })
-            })
-        }
+const server = http.createServer((req,res) => {
+    const path = url.parse(req.url,true).pathname;
+    const query = url.parse(req.url,true).query;
+    const method = req.method;
+    console.log(path,query,method);
+
+    if(path === '/comments' && method === 'GET') {
+        fs.readFile('comments.json','utf-8',(err,data) => {
+            if(err) {
+                console.log(err);
+                res.writeHead(500,{'Content-Type':'text/html'});
+                res.end('Internal Server Error');
+            } else {
+                const comments = JSON.parse(data);
+                res.writeHead(200,{'Content-Type':'application/json'});
+                res.end(JSON.stringify(comments));
+            }
+        })
+    } else {
+        res.writeHead(404,{'Content-Type':'text/html'});
+        res.end('Page Not Found');
     }
 });
+
+const port = 5000;
+server.listen(port,() => {
+    console.log(`Server is listening on port ${port}`);
+})
